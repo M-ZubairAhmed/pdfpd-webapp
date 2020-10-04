@@ -1,0 +1,26 @@
+html {
+  @apply bg-pink-100;
+  @apply subpixel-antialiased;
+  @apply font-sans;
+  @apply lining-nums;
+}
+
+progress {
+  @apply appearance-none;
+  @apply border-0;
+  @apply border-solid;
+  @apply border-transparent;
+  @apply h-1;
+  @apply w-full;
+  @apply bg-transparent;
+  @apply text-pink-800;
+  &::-webkit-progress-bar {
+    @apply bg-transparent;
+  }
+  &::-webkit-progress-value {
+    @apply bg-pink-800;
+  }
+  &::-moz-progress-bar {
+    @apply bg-pink-800;
+  }
+}

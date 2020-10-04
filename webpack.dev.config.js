@@ -9,7 +9,7 @@ const envVars = dotenv.config({
 
 module.exports = {
   mode: "development",
-  entry: path.resolve(__dirname, "src", "index.js"),
+  entry: path.resolve(__dirname, "src", "_routes", "index.js"),
   output: {
     path: path.resolve(__dirname, "dist"),
     filename: "dist.bundle-[hash].js",
@@ -44,8 +44,7 @@ module.exports = {
   },
   plugins: [
     new htmlWebpackPlugin({
-      template: path.resolve(__dirname, "src", "index.html"),
-      favicon: path.resolve(__dirname, "src", "favicon.ico"),
+      template: path.resolve(__dirname, "src", "_static", "index.html"),
     }),
     new webpack.DefinePlugin({
       "process.env": JSON.stringify(envVars.parsed),
@@ -58,7 +57,7 @@ module.exports = {
     compress: false,
     historyApiFallback: true,
     host: "localhost",
-    open: true,
+    open: false,
     stats: "errors-only",
     port: 8000,
     disableHostCheck: true,
