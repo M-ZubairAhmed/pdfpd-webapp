@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 
-const UploadNewRow = () => (
+const UploadNewRow = ({ onUpload }) => (
   <li
     className="bg-white h-20 w-full rounded-lg border-4 border-dashed border-gray-400
    text-gray-500 text-xl font-black
@@ -18,6 +18,7 @@ const UploadNewRow = () => (
       className="hidden"
       accept=".pdf"
       multiple
+      onChange={onUpload}
     />
   </li>
 );
@@ -26,13 +27,13 @@ const UploadFileRow = () => {
   return <div>asa</div>;
 };
 
-const UploadPage = ({ pdfUploadList }) => {
+const UploadPage = ({ filesList = [], onUpload }) => {
   return (
     <ul className="list-none">
-      {pdfUploadList.map((pdfUploadFile) => (
-        <UploadFileRow pdfUploadFile={pdfUploadList} />
+      {filesList.map((file) => (
+        <UploadFileRow key={filesList.id} file={file} />
       ))}
-      <UploadNewRow />
+      <UploadNewRow onUpload={onUpload} />
     </ul>
   );
 };
