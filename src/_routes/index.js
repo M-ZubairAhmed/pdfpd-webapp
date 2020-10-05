@@ -1,17 +1,10 @@
-import React, { StrictMode, Suspense, lazy, useState, useEffect } from "react";
+import React, { StrictMode, Suspense, lazy, useState } from "react";
 import { render } from "react-dom";
 import { Tabs, TabList, Tab, TabPanels, TabPanel } from "@reach/tabs";
 
 import "../_styles/index.scss";
 
-import { useUserIDFromLocal } from "_common/hooks";
-import {
-  MIME_TYPE_PDF,
-  TWENTY_FIVE_MEGA_BYTE,
-  FILE_STATUSES,
-} from "_common/constants";
-
-const DEF_TAB_INDEX = 1;
+const DEF_TAB_INDEX = 0;
 
 const ReadPage = lazy(() =>
   import(/* webpackChunkName: "read-page" */ "_routes/read")
@@ -63,83 +56,12 @@ const Nav = ({ activeTabIndex }) => (
   </>
 );
 
-function getRandomInteger(min, max) {
-  const minNumber = parseInt(min, 10);
-  const maxNumber = parseInt(max, 10);
-
-  return Math.floor(Math.random() * maxNumber + minNumber);
-}
-
 const App = () => {
-  const userID = useUserIDFromLocal();
-
   const [activeTabIndex, changeTabIndex] = useState(DEF_TAB_INDEX);
 
   function onTabChange(tabIndex) {
     changeTabIndex(tabIndex);
   }
-
-  const [savedText, setSavedText] = useState("");
-
-  const [filesList, setFilesList] = useState([]);
-  const [filesStatusList, setFilesStatusList] = useState([]);
-
-  function onUpload(event) {
-    event.preventDefault();
-
-    const uploadedFiles = event?.target?.files ?? [];
-
-    if (uploadedFiles && uploadedFiles.length !== 0) {
-      let filesList = [];
-      let filesStatusList = [];
-
-      for (const uploadedFile of uploadedFiles) {
-        const fileType = uploadedFile?.type ?? "";
-        const fileSize = uploadedFile?.size ?? 0;
-        const fileName = uploadedFile?.name ?? "";
-        const fileID = `${getRandomInteger(
-          "100001",
-          "1000001"
-        )}-${fileName.toLowerCase()}-${getRandomInteger("10001", "100001")}`;
-
-        // filter out any unsupported pdfs
-        if (
-          fileType === MIME_TYPE_PDF &&
-          fileName.trim().length !== 0 &&
-          fileSize < TWENTY_FIVE_MEGA_BYTE &&
-          fileSize > 0
-        ) {
-          // only push correctly supported pdfs
-          filesList.push({
-            id: fileID,
-            name: fileName,
-            size: fileSize,
-            data: uploadedFile,
-          });
-
-          // build the correct files status list
-          filesStatusList.push({
-            id: fileID,
-            status: FILE_STATUSES["INPROGRESS"],
-            stage: "0",
-          });
-        }
-      }
-
-      // Update the files list
-      setFilesList((currentFilesList) => [...currentFilesList, ...filesList]);
-
-      // Update the files status list
-      setFilesStatusList((currentFilesStatusList) => [
-        ...currentFilesStatusList,
-        ...filesStatusList,
-      ]);
-    }
-  }
-
-  useEffect(() => {
-    // Try fetch to stored Texts of the user from DB
-  }, []);
 
   return (
     <StrictMode>
@@ -152,14 +74,10 @@ const App = () => {
           <Nav activeTabIndex={activeTabIndex} />
           <TabPanels as="main" className="w-full min-h-screen">
             <TabPanel>
-              <ReadPage savedText={savedText} />
+              <ReadPage />
             </TabPanel>
             <TabPanel>
-              <UploadPage
-                onUpload={onUpload}
-                filesList={filesList}
-                filesStatusList={filesStatusList}
-              />
+              <UploadPage />
             </TabPanel>
           </TabPanels>
         </Tabs>

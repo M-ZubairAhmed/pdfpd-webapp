@@ -6,9 +6,9 @@
   "dependencies": {
     "@reach/tabs": "^0.11.2",
     "axios": "^0.20.0",
+    "firebase": "^7.22.1",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
-    "react-router-dom": "^5.2.0",
     "tailwindcss": "^1.8.10"
   },
   "devDependencies": {

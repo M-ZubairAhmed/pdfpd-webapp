@@ -1,16 +1,28 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 
-const ReadPage = ({ savedText }) => {
+import { useUserIDFromLocal } from "_common/hooks";
+
+const ReadPage = () => {
+  const userID = useUserIDFromLocal();
+
+  const [savedText, setSavedText] = useState("");
+
+  const showHelpText = savedText.trim().length === 0;
+
   return (
-    <article>
-      <textarea
-        className="bg-white w-full h-screen box-border resize-none border-8 
+    <article
+      className={`${
+        showHelpText ? "bg-pink-200" : "bg-white"
+      } w-full h-screen border-8 
       border-pink-600 rounded-lg p-1 xl:p-4 text-lg leading-snug
-      placeholder-gray-700"
-        value={savedText}
-        readOnly
-        placeholder="Upload PDFs and start reading"
-      />
+      overflow-y-scroll overscroll-auto`}
+    >
+      {savedText}
+      {showHelpText && (
+        <div className="w-full text-center italic text-2xl font-semibold text-gray-700">
+          Upload few PDFs to start reading extracted text here.
+        </div>
+      )}
     </article>
   );
 };

@@ -1,8 +1,14 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 
-import { ONE_MEGA_BYTE, FILE_STATUSES } from "_common/constants";
+import {
+  ONE_MEGA_BYTE,
+  MIME_TYPE_PDF,
+  TWENTY_FIVE_MEGA_BYTE,
+  FILE_STATUSES,
+} from "_common/constants";
+import { useUserIDFromLocal } from "_common/hooks";
 
-const UploadNewRow = ({ onUpload }) => (
+const UploadNewRow = ({ onFilesUpload }) => (
   <li
     className="bg-white h-20 w-full rounded-lg border-4 border-dashed border-gray-400
    text-gray-500 text-xl font-black
@@ -20,7 +26,7 @@ const UploadNewRow = ({ onUpload }) => (
       className="hidden"
       accept=".pdf"
       multiple
-      onChange={onUpload}
+      onChange={onFilesUpload}
     />
   </li>
 );
@@ -53,13 +59,13 @@ const UploadFileRow = ({ file, filesStatusList = [] }) => {
     uploadStage = fileStatus.stage;
   }
 
-  let displayStatusColor = "";
+  let displayStatusColor = "bg-gray-200 border-gray-400";
   if (status === FILE_STATUSES["INPROGRESS"]) {
     displayStatusColor = "bg-yellow-200 border-yellow-400";
   } else if (status === FILE_STATUSES["ERROR"]) {
     displayStatusColor = "bg-red-200 border-red-400";
   } else if (status === FILE_STATUSES["COMPLETED"]) {
-    displayStatusColor = "bg-gray-200 border-gray-400";
+    displayStatusColor = "bg-green-200 border-green-400";
   }
 
   return (
@@ -76,7 +82,7 @@ const UploadFileRow = ({ file, filesStatusList = [] }) => {
         </h5>
         <div className="order-first xl:order-last w-full text-right">
           <small
-            className={`text-xs rounded-full ${displayStatusColor} px-2 font-semibold text-gray-700 
+            className={`text-xs rounded-full ${displayStatusColor} px-2 py-1 font-semibold text-gray-700 
           border border-solid `}
           >
             {status}
@@ -92,9 +98,108 @@ const UploadFileRow = ({ file, filesStatusList = [] }) => {
   );
 };
 
-const UploadPage = ({ filesList = [], onUpload, filesStatusList = [] }) => {
+function getRandomInteger(min, max) {
+  const minNumber = parseInt(min, 10);
+  const maxNumber = parseInt(max, 10);
+
+  return Math.floor(Math.random() * maxNumber + minNumber);
+}
+
+const UploadPage = () => {
+  const userID = useUserIDFromLocal();
+
+  const [filesList, setFilesList] = useState([]);
+  const [filesStatusList, setFilesStatusList] = useState([]);
+
+  function onFilesUpload(event) {
+    event.preventDefault();
+
+    const uploadedFiles = event?.target?.files ?? [];
+
+    if (uploadedFiles && uploadedFiles.length !== 0) {
+      let filesList = [];
+      let filesStatusList = [];
+
+      for (const uploadedFile of uploadedFiles) {
+        const fileType = uploadedFile?.type ?? "";
+        const fileSize = uploadedFile?.size ?? 0;
+        const fileName = uploadedFile?.name ?? "";
+        const fileID = `${getRandomInteger(
+          "100001",
+          "1000001"
+        )}-${fileName.toLowerCase()}-${getRandomInteger("10001", "100001")}`;
+
+        // filter out any unsupported pdfs
+        if (
+          fileType === MIME_TYPE_PDF &&
+          fileName.trim().length !== 0 &&
+          fileSize < TWENTY_FIVE_MEGA_BYTE &&
+          fileSize > 0
+        ) {
+          // only push correctly supported pdfs
+          filesList.push({
+            id: fileID,
+            name: fileName,
+            size: fileSize,
+            data: uploadedFile,
+          });
+
+          // build the correct files status list
+          filesStatusList.push({
+            id: fileID,
+            status: FILE_STATUSES["QUEUED"],
+            stage: "0",
+          });
+        }
+      }
+
+      // Update the files list
+      setFilesList((currentFilesList) => [...currentFilesList, ...filesList]);
+
+      // Update the files status list
+      setFilesStatusList((currentFilesStatusList) => [
+        ...currentFilesStatusList,
+        ...filesStatusList,
+      ]);
+    }
+  }
+
+  function doUploadFilesToServer(filesToUpload) {
+    console.log(filesToUpload);
+  }
+
+  // effect called after every new file upload
+  useEffect(() => {
+    let filesQueuedToUpload = [];
+    filesList.forEach((file) => {
+      const id = file?.id ?? "";
+
+      // find the file in file status list to get its status
+      const fileInStatusList = filesStatusList.find(
+        (fileStatus) => fileStatus.id === id
+      );
+      const fileStatus = fileInStatusList?.status ?? "";
+
+      // Check if the file is exists in file status list
+      if (
+        id.length !== 0 ||
+        filesStatusList !== undefined ||
+        fileStatus.length !== 0
+      ) {
+        // only add the files which havent yet downloaded
+        if (fileStatus === FILE_STATUSES["QUEUED"]) {
+          filesQueuedToUpload.push(file);
+        }
+      }
+    });
+
+    if (filesQueuedToUpload.length > 0) {
+      doUploadFilesToServer(filesQueuedToUpload);
+    }
+  }, [filesList]);
+
   return (
-    <ul className="list-none px-4">
+    <ul className="list-none px-4 xl:px-0">
       {filesList.map((file) => (
         <UploadFileRow
           key={file.id}
@@ -102,7 +207,7 @@ const UploadPage = ({ filesList = [], onUpload, filesStatusList = [] }) => {
           filesStatusList={filesStatusList}
         />
       ))}
-      <UploadNewRow onUpload={onUpload} />
+      <UploadNewRow onFilesUpload={onFilesUpload} />
     </ul>
   );
 };
