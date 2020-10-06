@@ -1,3 +1,4 @@
+import axios from "axios";
 import React, { useEffect, useState } from "react";
 
 import {
@@ -70,8 +71,8 @@ const UploadFileRow = ({ file, filesStatusList = [] }) => {
 
   return (
     <li
-      className="bg-white w-full rounded-sm border-4 border-solid border-gray-300 mb-6
-  flex flex-col rounded-t-lg"
+      className={`bg-white w-full rounded-sm border-4 border-solid 
+      border-gray-300 mb-6 flex flex-col rounded-t-lg`}
     >
       <div className="flex flex-col xl:flex-row justify-between items-center px-2 pt-2">
         <h5
@@ -92,7 +93,9 @@ const UploadFileRow = ({ file, filesStatusList = [] }) => {
       <p className="text-sm text-gray-500 px-2 pb-2">{sizeInMB}</p>
       <progress
         max="100"
-        value={uploadStage === "0" || uploadStage === "100" ? "0" : uploadStage}
+        value={
+          uploadStage === 0 || uploadStage === 100 ? "0" : `${uploadStage}`
+        }
       ></progress>
     </li>
   );
@@ -164,8 +167,56 @@ const UploadPage = () => {
     }
   }
 
-  function doUploadFilesToServer(filesToUpload) {
-    console.log(filesToUpload);
+  function trackFileUploadProgress(progressEvent, fileID) {
+    const stage = Math.round(
+      (progressEvent.loaded / progressEvent.total) * 100
+    );
+
+    setFilesStatusList((currentFilesStatusList) => {
+      // Find the index of the uploading file in the file status list
+      const fileIndexInStatusList = currentFilesStatusList.findIndex(
+        (fileStatus) => fileStatus.id === fileID
+      );
+
+      const status =
+        stage === 100
+          ? FILE_STATUSES["COMPLETED"]
+          : FILE_STATUSES["INPROGRESS"];
+
+      // update the file status to inprogress and add the uploaded progress
+      const processingFileInStatusList = Object.assign(
+        {},
+        currentFilesStatusList[fileIndexInStatusList],
+        { status, stage }
+      );
+
+      // return the new array of file status list with the updated file status
+      return [
+        ...currentFilesStatusList.slice(0, fileIndexInStatusList),
+        processingFileInStatusList,
+        ...currentFilesStatusList.slice(fileIndexInStatusList + 1),
+      ];
+    });
+  }
+
+  async function doUploadFile(fileToUpload) {
+    const file = fileToUpload?.data ?? "";
+    const fileID = fileToUpload?.id ?? "";
+
+    const data = new FormData();
+    data.append("file", file, fileID);
+
+    try {
+      const response = await axios({
+        method: "POST",
+        url: `${process.env.API_BASE_URL}/upload`,
+        data,
+        onUploadProgress: (progressEvent) =>
+          trackFileUploadProgress(progressEvent, fileID),
+      });
+    } catch (err) {
+      console.error("err in upload", err);
+    }
   }
 
   // effect called after every new file upload
@@ -194,7 +245,7 @@ const UploadPage = () => {
     });
 
     if (filesQueuedToUpload.length > 0) {
-      doUploadFilesToServer(filesQueuedToUpload);
+      filesQueuedToUpload.forEach((file) => doUploadFile(file));
     }
   }, [filesList]);
 
