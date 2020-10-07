@@ -101,11 +101,15 @@ const UploadFileRow = ({ file, filesStatusList = [] }) => {
   );
 };
 
-function getRandomInteger(min, max) {
-  const minNumber = parseInt(min, 10);
-  const maxNumber = parseInt(max, 10);
+function attachRandomStringToFileName(fileName) {
+  const minNumber = 1000001;
+  const maxNumber = 9999999;
 
-  return Math.floor(Math.random() * maxNumber + minNumber);
+  const randomWithMath = Math.floor(Math.random() * maxNumber + minNumber);
+  const randomWithDate = Date.now()
+  const safeFileName = fileName.trim().toLowerCase()
+
+  return `${randomWithDate}-${randomWithMath}-${safeFileName}`
 }
 
 const UploadPage = () => {
@@ -127,10 +131,7 @@ const UploadPage = () => {
         const fileType = uploadedFile?.type ?? "";
         const fileSize = uploadedFile?.size ?? 0;
         const fileName = uploadedFile?.name ?? "";
-        const fileID = `${getRandomInteger(
-          "100001",
-          "1000001"
-        )}-${fileName.toLowerCase()}-${getRandomInteger("10001", "100001")}`;
+        const fileID = attachRandomStringToFileName(fileName)
 
         // filter out any unsupported pdfs
         if (
@@ -204,7 +205,7 @@ const UploadPage = () => {
     const fileID = fileToUpload?.id ?? "";
 
     const data = new FormData();
-    data.append("file", file, fileID);
+    data.append("pdfFile", file, fileID);
 
     try {
       const response = await axios({
