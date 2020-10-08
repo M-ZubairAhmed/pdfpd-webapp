@@ -106,10 +106,10 @@ function attachRandomStringToFileName(fileName) {
   const maxNumber = 9999999;
 
   const randomWithMath = Math.floor(Math.random() * maxNumber + minNumber);
-  const randomWithDate = Date.now()
-  const safeFileName = fileName.trim().toLowerCase()
+  const randomWithDate = Date.now();
+  const safeFileName = fileName.trim().toLowerCase();
 
-  return `${randomWithDate}-${randomWithMath}-${safeFileName}`
+  return `${randomWithDate}-${randomWithMath}-${safeFileName}`;
 }
 
 const UploadPage = () => {
@@ -131,7 +131,7 @@ const UploadPage = () => {
         const fileType = uploadedFile?.type ?? "";
         const fileSize = uploadedFile?.size ?? 0;
         const fileName = uploadedFile?.name ?? "";
-        const fileID = attachRandomStringToFileName(fileName)
+        const fileID = attachRandomStringToFileName(fileName);
 
         // filter out any unsupported pdfs
         if (
@@ -211,6 +211,9 @@ const UploadPage = () => {
       const response = await axios({
         method: "POST",
         url: `${process.env.API_BASE_URL}/upload`,
+        headers: {
+          "User-ID": userID,
+        },
         data,
         onUploadProgress: (progressEvent) =>
           trackFileUploadProgress(progressEvent, fileID),

@@ -2,14 +2,27 @@ import React, { useEffect, useState } from "react";
 
 import { USER_ID_LOCAL_STORAGE_KEY } from "_common/constants";
 
+function generateRandomUUID() {
+  // make a string with base 36
+  const randomWithMath = Math.random().toString(36).substr(2, 9);
+  const randomWithDate = Date.now();
+
+  return `user_${randomWithDate}${randomWithMath}`;
+}
+
 export const useUserIDFromLocal = () => {
   const [useUserIDFromLocal, setUserIDFromLocal] = useState(null);
 
   useEffect(() => {
-    const userID = localStorage.getItem(USER_ID_LOCAL_STORAGE_KEY);
+    const userIDInLocal = localStorage.getItem(USER_ID_LOCAL_STORAGE_KEY);
 
-    if (userID !== null && userID.length !== 0) {
-      setUserIDFromLocal(userID);
+    // no user id exists in the system yet
+    if (userIDInLocal === null || userIDInLocal.trim().length === 0) {
+      const newUserId = generateRandomUUID();
+      localStorage.setItem(USER_ID_LOCAL_STORAGE_KEY, newUserId);
+      setUserIDFromLocal(newUserId);
+    } else {
+      setUserIDFromLocal(userIDInLocal);
     }
   }, []);
 
