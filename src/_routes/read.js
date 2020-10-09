@@ -32,8 +32,8 @@ const ReadPage = () => {
             let newUserDocuments = [];
 
             allUserDocuments.forEach((userDocument) => {
+              const fileID = userDocument.data().fileID
               const fileName = userDocument.data().fileName;
-              const fileOriginalName = fileName.split("-").slice(2).join("");
               const fileText = userDocument.data().fileText;
               const fileCompletedAt = userDocument
                 .data()
@@ -42,9 +42,9 @@ const ReadPage = () => {
 
               if (fileName.length !== 0 && fileText.length !== 0)
                 newUserDocuments.push({
-                  fileText,
+                  fileID,
                   fileName,
-                  fileOriginalName,
+                  fileText,
                   fileCompletedAt,
                 });
             });
@@ -76,9 +76,9 @@ const ReadPage = () => {
       {savedDocuments.map((document) => (
         <section
           className="mb-6 pb-4 border-b-4 border-solid border-gray-300"
-          key={document.fileName}
+          key={document.fileID}
         >
-          <h1 className="text-lg text-gray-900">{document.fileOriginalName}</h1>
+          <h1 className="text-lg text-gray-900">{document.fileName}</h1>
           <p className="text-sm text-gray-700 pb-2 pt-1">
             {document.fileCompletedAt}
           </p>

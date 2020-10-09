@@ -8,7 +8,7 @@ import {
   TEN_MEGA_BYTES,
   FILE_STATUSES,
 } from "_common/constants";
-import { useUserIDFromLocal } from "_common/hooks";
+import { useUserIDFromLocal,generateRandomUUID } from "_common/hooks";
 
 function sanitizeName(text) {
   if (text.trim().length === 0) {
@@ -160,7 +160,7 @@ const UploadPage = () => {
           uploadedFile && uploadedFile.name && uploadedFile.name.length !== 0
             ? sanitizeName(uploadedFile.name)
             : "";
-        const fileID = attachRandomIdToText(fileName);
+        const fileID = `${generateRandomUUID()}-${fileName}`;
 
         // filter out any unsupported pdfs
         if (
