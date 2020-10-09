@@ -32,7 +32,7 @@ const ReadPage = () => {
             let newUserDocuments = [];
 
             allUserDocuments.forEach((userDocument) => {
-              const fileID = userDocument.data().fileID
+              const fileID = userDocument.data().fileID;
               const fileName = userDocument.data().fileName;
               const fileText = userDocument.data().fileText;
               const fileCompletedAt = userDocument

@@ -8,7 +8,7 @@ import {
   TEN_MEGA_BYTES,
   FILE_STATUSES,
 } from "_common/constants";
-import { useUserIDFromLocal,generateRandomUUID } from "_common/hooks";
+import { useUserIDFromLocal, generateRandomUUID } from "_common/hooks";
 
 function sanitizeName(text) {
   if (text.trim().length === 0) {
@@ -222,7 +222,7 @@ const UploadPage = () => {
   async function doUploadFile(fileToUpload) {
     const fileData = fileToUpload?.fileData ?? "";
     const fileID = fileToUpload?.fileID ?? "";
-    const fileName = fileToUpload?.fileName??""
+    const fileName = fileToUpload?.fileName ?? "";
 
     const data = new FormData();
     data.append(fileID, fileData, fileName);
@@ -240,7 +240,7 @@ const UploadPage = () => {
       if (response.status === 201) {
         trackFileUploadProgress(fileID, FILE_STATUSES.COMPLETED);
       } else {
-          throw new Error("File didnt process successfully");
+        throw new Error("File didnt process successfully");
       }
     } catch (err) {
       trackFileUploadProgress(fileID, FILE_STATUSES.ERROR);
