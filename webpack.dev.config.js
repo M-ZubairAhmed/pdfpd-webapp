@@ -13,8 +13,8 @@ module.exports = {
   output: {
     path: path.resolve(__dirname, "dist"),
     filename: "dist.bundle-[hash].js",
-    publicPath: "/",
     pathinfo: true,
+    publicPath: "/",
   },
   devtool: "inline-source-map",
   module: {
@@ -36,11 +36,10 @@ module.exports = {
           "sass-loader",
         ],
       },
-      {
-        test: /\.svg$/,
-        use: ["@svgr/webpack"],
-      },
     ],
+  },
+  resolve: {
+    modules: [path.resolve("src"), path.resolve("node_modules")],
   },
   plugins: [
     new htmlWebpackPlugin({
@@ -51,9 +50,6 @@ module.exports = {
       "process.env": JSON.stringify(envVars.parsed),
     }),
   ],
-  resolve: {
-    modules: [path.resolve("src"), path.resolve("node_modules")],
-  },
   devServer: {
     compress: false,
     historyApiFallback: true,
