@@ -73,10 +73,7 @@ const ReadPage = () => {
       border-gray-300 rounded-lg`}
     >
       {savedDocuments.map((document) => (
-        <section
-          className="mb-6 pb-4 border-b-4 border-solid border-gray-300"
-          key={document.fileID}
-        >
+        <section className="mb-6 pb-4" key={document.fileID}>
           <h1 className="text-lg text-gray-900 sticky top-0 bg-gray-300 py-2 xl:px-4 px-1 bg-opacity-90">
             {document.fileName}
           </h1>

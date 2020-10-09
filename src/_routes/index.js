@@ -48,8 +48,9 @@ const Nav = ({ activeTabIndex }) => (
   <>
     <TabList
       as="nav"
-      className="flex flex-row justify-between p-4 rounded-full flex-wrap"
+      className="flex flex-row justify-between px-4 pt-4 pb-6 rounded-full flex-wrap"
     >
+      <header className="hero-image-bg w-full bg-center bg-no-repeat bg-contain h-40" />
       <NavItem isActive={activeTabIndex === 0}>Preview</NavItem>
       <NavItem isActive={activeTabIndex === 1}>Upload</NavItem>
     </TabList>
