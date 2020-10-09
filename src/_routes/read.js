@@ -68,21 +68,24 @@ const ReadPage = () => {
   return (
     <article
       className={`${
-        showHelpText ? "bg-pink-200" : "bg-white"
-      } w-full h-screen border-4 
-      border-pink-600 rounded-lg p-1 xl:p-4 text-lg leading-snug
-      overflow-y-scroll overscroll-auto overflow-x-hidden`}
+        showHelpText ? "bg-gray-200" : "bg-white"
+      } border-4 min-h-screen 
+      border-gray-300 rounded-lg`}
     >
       {savedDocuments.map((document) => (
         <section
           className="mb-6 pb-4 border-b-4 border-solid border-gray-300"
           key={document.fileID}
         >
-          <h1 className="text-lg text-gray-900">{document.fileName}</h1>
-          <p className="text-sm text-gray-700 pb-2 pt-1">
+          <h1 className="text-lg text-gray-900 sticky top-0 bg-gray-300 py-2 xl:px-4 px-1 bg-opacity-90">
+            {document.fileName}
+          </h1>
+          <p className="text-sm text-gray-700 bg-gray-300 pb-2 xl:px-4 px-1 bg-opacity-90">
             {document.fileCompletedAt}
           </p>
-          <p className="text-base text-gray-800">{document.fileText}</p>
+          <p className="text-base text-gray-800 xl:px-4 px-1 xl:py-4 py-1 break-words leading-snug">
+            {document.fileText}
+          </p>
         </section>
       ))}
       {showHelpText && (

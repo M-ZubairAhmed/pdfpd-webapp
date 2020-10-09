@@ -5,7 +5,11 @@ module.exports = {
       sm: "640px",
       xl: "1280px",
     },
-    extend: {},
+    extend: {
+      opacity: {
+        90: "0.9",
+      },
+    },
   },
   variants: {},
   plugins: [],

@@ -24,20 +24,6 @@ function sanitizeName(text) {
   return textSanitizedInLowerCaps;
 }
 
-function attachRandomIdToText(text = "") {
-  if (text.trim().length === 0) {
-    return "";
-  }
-
-  const minNumber = 1000001;
-  const maxNumber = 9999999;
-  const randomWithMath = Math.floor(Math.random() * maxNumber + minNumber);
-  const randomWithDate = Date.now();
-  const textAttachedWithRandomIDs = `${randomWithMath}-${randomWithDate}-${text}`;
-
-  return textAttachedWithRandomIDs;
-}
-
 function convertBytesToMB(sizeInBytes) {
   const sizeInMBytes = sizeInBytes / ONE_MEGA_BYTE;
 
@@ -47,7 +33,7 @@ function convertBytesToMB(sizeInBytes) {
 
 const RowOfUpload = ({ onFilesUpload }) => (
   <li
-    className="bg-white h-20 w-full rounded-lg border-4 border-dashed border-gray-400
+    className="bg-white h-16 w-full rounded-lg border-4 border-dashed border-gray-400
    text-gray-500 text-xl font-black
    hover:text-gray-600 hover:border-gray-500 transition duration-300 ease-in-out"
   >
@@ -84,11 +70,13 @@ const RowOfFile = ({ file, filesStatusList = [] }) => {
     return null;
   }
 
+  const fileStatusMessage = fileInStatusList?.fileStatusMessage ?? "";
+
   let displayStatusColor = "";
   let progressValue = "0";
   let progressColor = false;
 
-  if (fileStatus === FILE_STATUSES.INPROGRESS) {
+  if (fileStatus === FILE_STATUSES.QUEUED) {
     displayStatusColor = "bg-yellow-200 border-yellow-400";
     progressColor = true;
     progressValue = "100";
@@ -100,16 +88,12 @@ const RowOfFile = ({ file, filesStatusList = [] }) => {
     displayStatusColor = "bg-green-200 border-green-400";
     progressValue = "0";
     progressColor = false;
-  } else if (fileStatus === FILE_STATUSES.QUEUED) {
-    displayStatusColor = "bg-gray-200 border-gray-400";
-    progressValue = "100";
-    progressColor = true;
   }
 
   return (
     <li
-      className={`bg-white w-full rounded-sm border-4 border-solid 
-      border-gray-300 mb-6 flex flex-col rounded-t-lg`}
+      className={`bg-white w-full rounded-lg border-4 border-solid 
+      border-gray-300 mb-6 flex flex-col`}
     >
       <div className="flex flex-col xl:flex-row justify-between items-center px-2 pt-2">
         <h5
@@ -128,11 +112,19 @@ const RowOfFile = ({ file, filesStatusList = [] }) => {
         </div>
       </div>
       <p className="text-sm text-gray-500 px-2 pb-2">{fileSize}</p>
-      <progress
-        max="100"
-        value={progressValue}
-        className="animate-pulse"
-      ></progress>
+      <div className="h-6 flex flex-col justify-end">
+        {fileStatusMessage.length === 0 ? (
+          <progress
+            max="100"
+            value={progressValue}
+            className="animate-pulse"
+          ></progress>
+        ) : (
+          <p className="text-center pb-2 text-sm text-gray-600 font-semibold">
+            {fileStatusMessage}
+          </p>
+        )}
+      </div>
     </li>
   );
 };
@@ -181,6 +173,7 @@ const UploadPage = () => {
           filesStatusList.push({
             fileID,
             fileStatus: FILE_STATUSES.QUEUED,
+            fileStatusMessage: "",
           });
         }
       }
@@ -196,7 +189,7 @@ const UploadPage = () => {
     }
   }
 
-  function trackFileUploadProgress(fileID, fileStatus) {
+  function trackFileUploadProgress(fileID, fileStatus, fileStatusMessage) {
     setFilesStatusList((currentFilesStatusList) => {
       // Find the index of the uploading file in the file status list
       const fileIndexInStatusList = currentFilesStatusList.findIndex(
@@ -208,7 +201,11 @@ const UploadPage = () => {
       }
 
       // update the file status to correct status assesed from above
-      const processingFileInStatusList = { fileID, fileStatus };
+      const processingFileInStatusList = {
+        fileID,
+        fileStatus,
+        fileStatusMessage,
+      };
 
       // return the new array of file status list with the updated file status
       return [
@@ -238,13 +235,21 @@ const UploadPage = () => {
       });
 
       if (response.status === 201) {
-        trackFileUploadProgress(fileID, FILE_STATUSES.COMPLETED);
+        trackFileUploadProgress(fileID, FILE_STATUSES.COMPLETED, "");
       } else {
-        throw new Error("File didnt process successfully");
+        throw new Error("File didnt proccess successfully");
       }
-    } catch (err) {
-      trackFileUploadProgress(fileID, FILE_STATUSES.ERROR);
-      console.error("err in upload", err);
+    } catch (error) {
+      let errorMessage = "";
+      if (error.response) {
+        errorMessage =
+          error?.response?.data?.message ?? "File failed to process";
+      } else if (error.request) {
+        errorMessage = "Couldnt recieve any response on processing";
+      } else {
+        errorMessage = "The network request isnt setup correctly";
+      }
+      trackFileUploadProgress(fileID, FILE_STATUSES.ERROR, errorMessage);
     }
   }
 

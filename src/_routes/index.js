@@ -35,7 +35,7 @@ const NavItem = ({ isActive = false, children }) => (
     className={`${
       isActive
         ? "bg-pink-800 text-white border-pink-900 cursor-default"
-        : "bg-gray-400 text-gray-600 border-gray-400 cursor-pointer"
+        : "bg-gray-200 text-gray-600 border-gray-400 cursor-pointer"
     } px-10 py-3 mx-3 rounded-full font-semibold border-solid border-2 my-2
       hover:border-pink-900 transition duration-500 ease
       `}
