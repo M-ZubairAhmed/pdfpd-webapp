@@ -45,16 +45,19 @@ const NavItem = ({ isActive = false, children }) => (
 );
 
 const Nav = ({ activeTabIndex }) => (
-  <>
-    <TabList
-      as="nav"
-      className="flex flex-row justify-between px-4 pt-4 pb-6 rounded-full flex-wrap"
-    >
-      <header className="hero-image-bg w-full bg-center bg-no-repeat bg-contain h-40" />
+  <nav
+    as="nav"
+    className="flex flex-row justify-between px-4 pt-4 pb-6 rounded-full flex-wrap"
+  >
+    <header
+      className="hero-image-bg w-full bg-center bg-no-repeat bg-contain h-40"
+      title="PDFDP"
+    />
+    <TabList>
       <NavItem isActive={activeTabIndex === 0}>Preview</NavItem>
       <NavItem isActive={activeTabIndex === 1}>Upload</NavItem>
     </TabList>
-  </>
+  </nav>
 );
 
 const App = () => {

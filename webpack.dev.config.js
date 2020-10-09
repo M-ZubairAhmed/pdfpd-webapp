@@ -45,6 +45,7 @@ module.exports = {
   plugins: [
     new htmlWebpackPlugin({
       template: path.resolve(__dirname, "src", "_static", "index.html"),
+      favicon: path.resolve(__dirname, "src", "_static", "favicon.png"),
     }),
     new webpack.DefinePlugin({
       "process.env": JSON.stringify(envVars.parsed),
