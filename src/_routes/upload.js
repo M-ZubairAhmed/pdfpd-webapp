@@ -1,15 +1,51 @@
-import axios from "axios";
 import React, { useEffect, useState } from "react";
+import axios from "axios";
+import sanitizer from "string-sanitizer";
 
 import {
   ONE_MEGA_BYTE,
   MIME_TYPE_PDF,
-  TWENTY_FIVE_MEGA_BYTE,
+  TEN_MEGA_BYTES,
   FILE_STATUSES,
 } from "_common/constants";
 import { useUserIDFromLocal } from "_common/hooks";
 
-const UploadNewRow = ({ onFilesUpload }) => (
+function sanitizeName(text) {
+  if (text.trim().length === 0) {
+    return "";
+  }
+
+  // replace spaces with dash
+  const textWithRemovedSpace = sanitizer.addDash(text);
+  // Keep other language letter but remove illegal chars
+  const textSanitized = sanitizer.sanitize.keepUnicode(textWithRemovedSpace);
+  const textSanitizedInLowerCaps = textSanitized.toLowerCase();
+
+  return textSanitizedInLowerCaps;
+}
+
+function attachRandomIdToText(text = "") {
+  if (text.trim().length === 0) {
+    return "";
+  }
+
+  const minNumber = 1000001;
+  const maxNumber = 9999999;
+  const randomWithMath = Math.floor(Math.random() * maxNumber + minNumber);
+  const randomWithDate = Date.now();
+  const textAttachedWithRandomIDs = `${randomWithMath}-${randomWithDate}-${text}`;
+
+  return textAttachedWithRandomIDs;
+}
+
+function convertBytesToMB(sizeInBytes) {
+  const sizeInMBytes = sizeInBytes / ONE_MEGA_BYTE;
+
+  // Return with one decimal number precision
+  return Math.round(sizeInMBytes * 10) / 10;
+}
+
+const RowOfUpload = ({ onFilesUpload }) => (
   <li
     className="bg-white h-20 w-full rounded-lg border-4 border-dashed border-gray-400
    text-gray-500 text-xl font-black
@@ -32,41 +68,42 @@ const UploadNewRow = ({ onFilesUpload }) => (
   </li>
 );
 
-function convertBytesToMB(sizeInBytes) {
-  const sizeInMBytes = sizeInBytes / ONE_MEGA_BYTE;
+const RowOfFile = ({ file, filesStatusList = [] }) => {
+  const fileID = file?.fileID ?? "";
+  const fileName = file?.fileName ?? "";
 
-  // Return with one decimal number precision
-  return Math.round(sizeInMBytes * 10) / 10;
-}
+  const fileSizeInBytes = file?.fileSize ?? "";
+  const fileSize = `${convertBytesToMB(fileSizeInBytes)} MB`;
 
-const UploadFileRow = ({ file, filesStatusList = [] }) => {
-  const name = file?.name ?? "";
-  const size = file?.size ?? "";
-  const id = file?.id ?? "";
-  // Just an approx size in MB
-  const sizeInMB = `${convertBytesToMB(size)} MB`;
-
-  const fileStatus = filesStatusList.find((fileStatus) => fileStatus.id === id);
-
-  let status = "";
-  let uploadStage = "";
-  if (fileStatus === undefined) {
-    // if file is not found in the status list, we will assume its already processed
-    status = FILE_STATUSES["COMPLETED"];
-    uploadStage = "0";
-  } else {
-    // Else then just take the status from the state
-    status = fileStatus.status;
-    uploadStage = fileStatus.stage;
+  const fileInStatusList = filesStatusList.find(
+    (fileStatus) => fileStatus.fileID === fileID
+  );
+  const fileStatus = fileInStatusList?.fileStatus ?? "";
+  if (fileStatus.length === 0) {
+    // if file status is not found in file status list
+    return null;
   }
 
-  let displayStatusColor = "bg-gray-200 border-gray-400";
-  if (status === FILE_STATUSES["INPROGRESS"]) {
+  let displayStatusColor = "";
+  let progressValue = "0";
+  let progressColor = false;
+
+  if (fileStatus === FILE_STATUSES.INPROGRESS) {
     displayStatusColor = "bg-yellow-200 border-yellow-400";
-  } else if (status === FILE_STATUSES["ERROR"]) {
+    progressColor = true;
+    progressValue = "100";
+  } else if (fileStatus === FILE_STATUSES.ERROR) {
     displayStatusColor = "bg-red-200 border-red-400";
-  } else if (status === FILE_STATUSES["COMPLETED"]) {
+    progressColor = false;
+    progressValue = "0";
+  } else if (fileStatus === FILE_STATUSES.COMPLETED) {
     displayStatusColor = "bg-green-200 border-green-400";
+    progressValue = "0";
+    progressColor = false;
+  } else if (fileStatus === FILE_STATUSES.QUEUED) {
+    displayStatusColor = "bg-gray-200 border-gray-400";
+    progressValue = "100";
+    progressColor = true;
   }
 
   return (
@@ -77,40 +114,28 @@ const UploadFileRow = ({ file, filesStatusList = [] }) => {
       <div className="flex flex-col xl:flex-row justify-between items-center px-2 pt-2">
         <h5
           className="text-lg text-gray-600 font-semibold truncate w-full text-left"
-          title={name}
+          title={fileName}
         >
-          {name}
+          {fileName}
         </h5>
         <div className="order-first xl:order-last w-full text-right">
           <small
             className={`text-xs rounded-full ${displayStatusColor} px-2 py-1 font-semibold text-gray-700 
-          border border-solid `}
+          border border-solid`}
           >
-            {status}
+            {fileStatus}
           </small>
         </div>
       </div>
-      <p className="text-sm text-gray-500 px-2 pb-2">{sizeInMB}</p>
+      <p className="text-sm text-gray-500 px-2 pb-2">{fileSize}</p>
       <progress
         max="100"
-        value={
-          uploadStage === 0 || uploadStage === 100 ? "0" : `${uploadStage}`
-        }
+        value={progressValue}
+        className="animate-pulse"
       ></progress>
     </li>
   );
 };
-
-function attachRandomStringToFileName(fileName) {
-  const minNumber = 1000001;
-  const maxNumber = 9999999;
-
-  const randomWithMath = Math.floor(Math.random() * maxNumber + minNumber);
-  const randomWithDate = Date.now();
-  const safeFileName = fileName.trim().toLowerCase();
-
-  return `${randomWithDate}-${randomWithMath}-${safeFileName}`;
-}
 
 const UploadPage = () => {
   const userID = useUserIDFromLocal();
@@ -127,32 +152,35 @@ const UploadPage = () => {
       let filesList = [];
       let filesStatusList = [];
 
+      // Allow multiple files upload
       for (const uploadedFile of uploadedFiles) {
         const fileType = uploadedFile?.type ?? "";
         const fileSize = uploadedFile?.size ?? 0;
-        const fileName = uploadedFile?.name ?? "";
-        const fileID = attachRandomStringToFileName(fileName);
+        const fileName =
+          uploadedFile && uploadedFile.name && uploadedFile.name.length !== 0
+            ? sanitizeName(uploadedFile.name)
+            : "";
+        const fileID = attachRandomIdToText(fileName);
 
         // filter out any unsupported pdfs
         if (
           fileType === MIME_TYPE_PDF &&
           fileName.trim().length !== 0 &&
-          fileSize < TWENTY_FIVE_MEGA_BYTE &&
+          fileSize < TEN_MEGA_BYTES &&
           fileSize > 0
         ) {
           // only push correctly supported pdfs
           filesList.push({
-            id: fileID,
-            name: fileName,
-            size: fileSize,
-            data: uploadedFile,
+            fileID,
+            fileName,
+            fileSize,
+            fileData: uploadedFile,
           });
 
           // build the correct files status list
           filesStatusList.push({
-            id: fileID,
-            status: FILE_STATUSES["QUEUED"],
-            stage: "0",
+            fileID,
+            fileStatus: FILE_STATUSES.QUEUED,
           });
         }
       }
@@ -168,28 +196,19 @@ const UploadPage = () => {
     }
   }
 
-  function trackFileUploadProgress(progressEvent, fileID) {
-    const stage = Math.round(
-      (progressEvent.loaded / progressEvent.total) * 100
-    );
-
+  function trackFileUploadProgress(fileID, fileStatus) {
     setFilesStatusList((currentFilesStatusList) => {
       // Find the index of the uploading file in the file status list
       const fileIndexInStatusList = currentFilesStatusList.findIndex(
-        (fileStatus) => fileStatus.id === fileID
+        (fileStatus) => fileStatus.fileID === fileID
       );
 
-      const status =
-        stage === 100
-          ? FILE_STATUSES["COMPLETED"]
-          : FILE_STATUSES["INPROGRESS"];
+      if (fileIndexInStatusList === -1) {
+        return [...currentFilesStatusList];
+      }
 
-      // update the file status to inprogress and add the uploaded progress
-      const processingFileInStatusList = Object.assign(
-        {},
-        currentFilesStatusList[fileIndexInStatusList],
-        { status, stage }
-      );
+      // update the file status to correct status assesed from above
+      const processingFileInStatusList = { fileID, fileStatus };
 
       // return the new array of file status list with the updated file status
       return [
@@ -201,11 +220,12 @@ const UploadPage = () => {
   }
 
   async function doUploadFile(fileToUpload) {
-    const file = fileToUpload?.data ?? "";
-    const fileID = fileToUpload?.id ?? "";
+    const fileData = fileToUpload?.fileData ?? "";
+    const fileID = fileToUpload?.fileID ?? "";
+    const fileName = fileToUpload?.fileName??""
 
     const data = new FormData();
-    data.append("pdfFile", file, fileID);
+    data.append(fileID, fileData, fileName);
 
     try {
       const response = await axios({
@@ -215,40 +235,47 @@ const UploadPage = () => {
           "User-ID": userID,
         },
         data,
-        onUploadProgress: (progressEvent) =>
-          trackFileUploadProgress(progressEvent, fileID),
       });
+
+      if (response.status === 201) {
+        trackFileUploadProgress(fileID, FILE_STATUSES.COMPLETED);
+      } else {
+          throw new Error("File didnt process successfully");
+      }
     } catch (err) {
+      trackFileUploadProgress(fileID, FILE_STATUSES.ERROR);
       console.error("err in upload", err);
     }
   }
 
-  // effect called after every new file upload
+  // effect called after every new file(s) upload
   useEffect(() => {
     let filesQueuedToUpload = [];
+
     filesList.forEach((file) => {
-      const id = file?.id ?? "";
+      const fileID = file?.fileID ?? "";
 
       // find the file in file status list to get its status
       const fileInStatusList = filesStatusList.find(
-        (fileStatus) => fileStatus.id === id
+        (fileStatus) => fileStatus.fileID === fileID
       );
-      const fileStatus = fileInStatusList?.status ?? "";
+      const fileStatus = fileInStatusList?.fileStatus ?? "";
 
-      // Check if the file is exists in file status list
+      // Check if the file exists in file status list
       if (
-        id.length !== 0 ||
-        filesStatusList !== undefined ||
+        fileID.length !== 0 ||
+        fileInStatusList !== undefined ||
         fileStatus.length !== 0
       ) {
         // only add the files which havent yet downloaded
-        if (fileStatus === FILE_STATUSES["QUEUED"]) {
+        if (fileStatus === FILE_STATUSES.QUEUED) {
           filesQueuedToUpload.push(file);
         }
       }
     });
 
     if (filesQueuedToUpload.length > 0) {
+      // incrementally start uploading the file
       filesQueuedToUpload.forEach((file) => doUploadFile(file));
     }
   }, [filesList]);
@@ -256,13 +283,13 @@ const UploadPage = () => {
   return (
     <ul className="list-none px-4 xl:px-0">
       {filesList.map((file) => (
-        <UploadFileRow
-          key={file.id}
+        <RowOfFile
+          key={file.fileID}
           file={file}
           filesStatusList={filesStatusList}
         />
       ))}
-      <UploadNewRow onFilesUpload={onFilesUpload} />
+      <RowOfUpload onFilesUpload={onFilesUpload} />
     </ul>
   );
 };

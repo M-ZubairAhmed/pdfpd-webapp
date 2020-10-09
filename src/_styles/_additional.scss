@@ -13,14 +13,17 @@ progress {
   @apply h-1;
   @apply w-full;
   @apply bg-transparent;
-  @apply text-pink-800;
+  @apply text-gray-600;
   &::-webkit-progress-bar {
     @apply bg-transparent;
   }
   &::-webkit-progress-value {
-    @apply bg-pink-800;
+    @apply bg-gray-600;
   }
   &::-moz-progress-bar {
-    @apply bg-pink-800;
+    @apply bg-gray-600;
+  }
+  &:not([value]) {
+    @apply bg-gray-600;
   }
 }
